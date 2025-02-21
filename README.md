@@ -1,6 +1,8 @@
 # Jekyll AI Related
 
-[![Gem Version](https://badge.fury.io/rb/jekyll-ai-related.svg)](https://badge.fury.io/rb/jekyll-ai-related)
+[![Gem Version](https://img.shields.io/gem/v/jekyll-ai-related)](https://rubygems.org/gems/jekyll-ai-related)
+[![GitHub Release](https://img.shields.io/github/v/release/pirafrank/jekyll-ai-related)](https://github.com/pirafrank/jekyll-ai-related/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 A [Jekyll](https://jekyllrb.com/) [command](https://jekyllrb.com/docs/plugins/commands/) plugin to generate list of related posts using AI.
 
