@@ -8,7 +8,7 @@ A [Jekyll](https://jekyllrb.com/) [command](https://jekyllrb.com/docs/plugins/co
 
 The plugin uses uses OpenAI API to generate embeddings from posts content, and stores them on Supabase vector database. A query on Supabase provides a similarity score between the post and all other posts on the site. The plugin then selects the most similar posts to generate the list of related posts.
 
-To avoid unnecessary API calls or slowing down the website generation, the plugin stores the list of related posts in the site's `_data` folder. This way you can `jekyll build` without calling the plugin or making API calls, while still having the list of related posts available as site data.
+To avoid unnecessary API calls or slowing down the website generation, the plugin stores the list of related posts in the site's `_data` folder. This way you can `jekyll build` without calling the plugin or making API calls, while still having the list of related posts available as site data. You only need to re-run it when you add or update posts.
 
 ## Getting started
 
@@ -34,12 +34,24 @@ You can always revert the changes by running the `drop.sql` script.
 1. Add the plugin to you Jekyll site's `Gemfile` in the `:jekyll_plugins` group:
 
 ```Gemfile
-gem 'jekyll-ai-related', git: 'https://github.com/pirafrank/jekyll-ai-related', branch: 'main'
+group :jekyll_plugins do
+  gem 'jekyll-ai-related'
+end
 ```
 
 2. Run `bundle install`
 
-### Update
+### From git
+
+Alternatively, you can get code straight from this repository. Code from `main` branch should be stable enough but may contain unreleased software with bugs or breaking changes. Unreleased software should be considered of beta quality.
+
+```Gemfile
+group :jekyll_plugins do
+  gem 'jekyll-ai-related', git: 'https://github.com/pirafrank/jekyll-ai-related', branch: 'main'
+end
+```
+
+## Update
 
 ```sh
 bundle update jekyll-ai-related
@@ -74,7 +86,8 @@ Configuration is optional. The plugin will use the default values if not provide
 | `related_posts_limit` | integer | The maximum number of related posts to extract per post | `3` |
 | `related_posts_score_threshold` | float | The minimum similarity score to consider a post related | `0.5` |
 
-**Note**: `related_posts_limit` and `related_posts_score_threshold` are used to filter the list of related posts. The plugin will return the top `related_posts_limit` posts with a similarity score greater than `related_posts_score_threshold`. A post may have 0 or more than `related_posts_limit` related posts, but only the top `related_posts_limit` will be returned, if any.
+> [!NOTE]
+> `related_posts_limit` and `related_posts_score_threshold` are used to filter the list of related posts. The plugin will return the top `related_posts_limit` posts with a similarity score greater than `related_posts_score_threshold`. A post may have 0 or more than `related_posts_limit` related posts, but only the top `related_posts_limit` will be returned, if any.
 
 ### Advanced configuration
 
@@ -104,9 +117,39 @@ Never write API keys in your code or configuration files you commit.
 
 Then you can run the plugin with:
 
-```txt
+```sh
 bundle exec jekyll related
 ```
+
+> [!IMPORTANT]
+> Re-run the plugin whenever you add or update posts to update the list of related posts. Only posts with a `post_updated_field` date greater than the last run will be processed.
+
+## Jekyll integration
+
+The plugin generates a list of related posts for each post in the site. Yet it won't edit your posts or layouts to display the list. It's up to you to integrate it in your site.
+
+You can access the list in the `site.data.YOUR_output_path_NAME` object. For example, with the default settings you can access it with `site.data.related_posts[post.slug]`.
+
+Here's a snippet to add it to the bottom of your `_layouts/post.html` layout file. It works with the default configuration.
+
+```html
+{% if site.data.related_posts[page.slug] %}
+<div class="related-posts">
+  <h3>Related Posts</h3>
+  <ul>
+    {% for post in site.data.related_posts[page.slug] %}
+    <li>
+      <a href="{{ post.url }}">{{ post.title }}</a>
+      <br/>{{ post.date | date: "%B %d, %Y" }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+```
+
+> [!NOTE]
+> The plugin writes posts in descending order of similarity score, from most similar to least similar. You can change the order by reversing the loop in the snippet above.
 
 ## Development
 
