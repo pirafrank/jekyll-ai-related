@@ -27,7 +27,7 @@ returns table (
   most_recent_edit timestamp with time zone,
   url text,
   date text,
-  similarity float
+  similarity numeric
 )
 language plpgsql
 security definer

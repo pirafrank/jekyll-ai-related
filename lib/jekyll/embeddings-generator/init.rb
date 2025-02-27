@@ -17,6 +17,7 @@ module Jekyll
         config["future"] = jk_config["include_future"] || opts["future"] || false
         config["limit"] = jk_config["related_posts_limit"] || 3
         config["score_threshold"] = jk_config["related_posts_score_threshold"] || 0.5
+        config["precision"] = jk_config["precision"] || 3
         config["openai_api_key"] = ENV["OPENAI_API_KEY"]
         config["supabase_url"] = ENV["SUPABASE_URL"]
         config["supabase_key"] = ENV["SUPABASE_KEY"]

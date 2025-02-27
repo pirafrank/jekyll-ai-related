@@ -110,6 +110,7 @@ module Jekyll
           supabase_key = config["supabase_key"]
           score_threshold = config["score_threshold"]
           limit = config["limit"] || 3
+          precision = config["precision"] || 3
           # Query using cosine similarity
           # Note: this MUST be a stored procedure on Supabase, and order of
           #       columns in 'select' statament must match the order of the
@@ -121,7 +122,7 @@ module Jekyll
                       most_recent_edit,
                       metadata->>'url' as url,
                       metadata->>'date' as date,
-                      1 - (embedding <=> '#{embedding}') as similarity
+                      TRUNC((1 - (embedding <=> '#{embedding}'))::numeric, #{precision}) as similarity
                     from page_embeddings
                     where uid != '#{post_uid}'
                     and 1 - (embedding <=> '#{embedding}') > '#{score_threshold}'

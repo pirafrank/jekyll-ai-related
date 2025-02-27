@@ -70,6 +70,7 @@ jekyll-ai-related:
   include_future: false
   related_posts_limit: 3
   related_posts_score_threshold: 0.5
+  precision: 3
 ```
 
 Configuration is optional. The plugin will use the default values if not provided.
@@ -85,6 +86,7 @@ Configuration is optional. The plugin will use the default values if not provide
 | `include_future` | boolean | Whether to include future posts in the list of related posts | `false` |
 | `related_posts_limit` | integer | The maximum number of related posts to extract per post | `3` |
 | `related_posts_score_threshold` | float | The minimum similarity score to consider a post related | `0.5` |
+| `precision` | integer | The number of decimal digits to round similarity scores to | `3` |
 
 > [!NOTE]
 > `related_posts_limit` and `related_posts_score_threshold` are used to filter the list of related posts. The plugin will return the top `related_posts_limit` posts with a similarity score greater than `related_posts_score_threshold`. A post may have 0 or more than `related_posts_limit` related posts, but only the top `related_posts_limit` will be returned, if any.
