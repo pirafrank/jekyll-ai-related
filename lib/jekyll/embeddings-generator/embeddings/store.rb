@@ -38,6 +38,7 @@ module Jekyll
           mre = data.most_recent_edit
           should_update = existing_record.nil? || Time.parse(existing_record["most_recent_edit"]) < mre
 
+          Jekyll.logger.debug "Embeddings Generator:", "Should update? #{should_update ? "Yes" : "No"}"
           return false unless should_update
 
           update_embedding(data)
@@ -54,6 +55,13 @@ module Jekyll
 
         def update_embedding(data)
           config = Jekyll::EmbeddingsGenerator.config
+          if config["dryrun"]
+            Jekyll.logger.info "Related posts:",
+                               "Dry run enabled, skipping database update. If this is the first run, please disable dry run."
+            return
+          else
+            Jekyll.logger.info "Embeddings Generator:", "Updating database for post: #{data.metadata[:title]}"
+          end
           supabase_url = config["supabase_url"]
           supabase_key = config["supabase_key"]
 

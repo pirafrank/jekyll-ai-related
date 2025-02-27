@@ -58,6 +58,10 @@ module Jekyll
       end
 
       def write_to_file(data, post)
+        if @config["dryrun"]
+          Jekyll.logger.info "Related posts:", "Dry run enabled, skipping writing to file."
+          return
+        end
         return if data.empty?
 
         # Create directory if it doesn't exist

@@ -21,6 +21,9 @@ module Jekyll
             c.option "drafts",
                      "--drafts",
                      "Get embeds and find related posts also for drafts."
+            c.option "dryrun",
+                     "--dry-run",
+                     "Do not update the database, do not write related posts to disk."
 
             c.action do |_, opts|
               Jekyll.logger.info "AI Related plugin starting..."

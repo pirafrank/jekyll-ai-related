@@ -15,6 +15,7 @@ module Jekyll
         config["path"] = jk_config["output_path"] || "related_posts"
         config["drafts"] = jk_config["include_drafts"] || opts["drafts"] || false
         config["future"] = jk_config["include_future"] || opts["future"] || false
+        config["dryrun"] = opts["dryrun"] || false
         config["limit"] = jk_config["related_posts_limit"] || 3
         config["score_threshold"] = jk_config["related_posts_score_threshold"] || 0.5
         config["precision"] = jk_config["precision"] || 3
@@ -29,8 +30,9 @@ module Jekyll
       def self.build(options)
         options["show_drafts"] = @config["drafts"]
         options["future"] = @config["future"]
-        Jekyll.logger.debug "Show drafts? #{options["show_drafts"]}"
-        Jekyll.logger.debug "Include future posts? #{options["future"]}"
+        Jekyll.logger.info "\n\n*** Runnin in dry-run mode ***\n\n" if @config["dryrun"]
+        Jekyll.logger.info "Show drafts? #{options["show_drafts"] ? "Yes" : "No"}"
+        Jekyll.logger.info "Include future posts? #{options["future"] ? "Yes" : "No"}"
         site = Jekyll::Site.new(options)
         site.reset
         site.read
