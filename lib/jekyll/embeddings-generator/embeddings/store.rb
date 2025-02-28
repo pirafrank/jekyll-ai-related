@@ -38,7 +38,7 @@ module Jekyll
           mre = data.most_recent_edit
           should_update = existing_record.nil? || Time.parse(existing_record["most_recent_edit"]) < mre
 
-          false unless should_update
+          return false unless should_update
 
           update_embedding(data)
         end
