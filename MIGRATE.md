@@ -14,7 +14,7 @@ The plugin now has a the following new configuration options:
 
 You need to set these values in your `_config.yml` file if the defaults do not fit you.
 
-If you are upgrading from `v0.1.0`, you need drop the data and re-run the plugin. You can find SQL scripts in the `sql\supabase` folder of this repository. This is due to a change in the handling of the similarity value. More details [here](https://github.com/pirafrank/jekyll-ai-related/releases/tag/v0.2.0).
+If you are upgrading from `v0.1.0`, you need drop the data and re-run the plugin. You can find SQL scripts in the `sql\supabase` folder of this repository. This is due to a change in the handling of the similarity value. More details [here](https://github.com/pirafrank/jekyll-ai-related/blob/main/CHANGELOG.md).
 
 ### Environments support
 

@@ -10,7 +10,7 @@
 header = """
 # Changelog\n
 All notable changes to this project will be documented in this file.\n
-Migration notes are available in the [migration guide](<REPO>/blob/main/MIGRATION.md).\n
+Migration notes for breaking changes are available in the [migration guide](https://github.com/pirafrank/jekyll-ai-related/blob/main/MIGRATE.md).\n
 """
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction

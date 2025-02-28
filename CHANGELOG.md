@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-Migration notes are available in the [migration guide](<REPO>/blob/main/MIGRATION.md).
+Migration notes are available in the [migration guide](https://github.com/pirafrank/jekyll-ai-related/blob/main/MIGRATE.md).
 
 ## [0.2.0] - 2025-02-28
 
