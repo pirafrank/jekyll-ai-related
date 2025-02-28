@@ -26,8 +26,16 @@ module Jekyll
                      "Do not update the database, do not write related posts to disk."
 
             c.action do |_, opts|
-              Jekyll.logger.info "AI Related plugin starting..."
+              Jekyll.logger.info "\nAI Related plugin starting...\n"
               options = configuration_from_options(opts)
+
+              mode = ENV["JEKYLL_ENV"] == "production" ? "PRODUCTION" : "development"
+              Jekyll.logger.info "\nWorking in ** #{mode} ** mode\n"
+              Jekyll.logger.info "\n*** Running in dry-run mode ***\n" if options["dryrun"]
+
+              Jekyll.logger.info "Show drafts? #{options["show_drafts"] ? "Yes" : "No"}"
+              Jekyll.logger.info "Include future posts? #{options["future"] ? "Yes" : "No"}"
+
               Jekyll::EmbeddingsGenerator.run(options)
             end
           end

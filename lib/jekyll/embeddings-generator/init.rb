@@ -24,6 +24,9 @@ module Jekyll
         config["supabase_key"] = ENV["SUPABASE_KEY"]
         config["db_table"] = jk_config["db_table"] || "page_embeddings"
         config["db_function"] = jk_config["db_function"] || "cosine_similarity"
+
+        Jekyll.logger.debug "Configuration:", config
+
         @config = config
         validate
         config
@@ -32,9 +35,6 @@ module Jekyll
       def self.build(options)
         options["show_drafts"] = @config["drafts"]
         options["future"] = @config["future"]
-        Jekyll.logger.info "\n\n*** Runnin in dry-run mode ***\n\n" if @config["dryrun"]
-        Jekyll.logger.info "Show drafts? #{options["show_drafts"] ? "Yes" : "No"}"
-        Jekyll.logger.info "Include future posts? #{options["future"] ? "Yes" : "No"}"
         site = Jekyll::Site.new(options)
         site.reset
         site.read
