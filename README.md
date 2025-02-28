@@ -41,7 +41,7 @@ end
 
 2. Run `bundle install`
 
-### From git
+### Install from git
 
 Alternatively, you can get code straight from this repository. Code from `main` branch should be stable enough but may contain unreleased software with bugs or breaking changes. Unreleased software should be considered of beta quality.
 
@@ -129,6 +129,24 @@ bundle exec jekyll related
 
 > [!IMPORTANT]
 > Re-run the plugin whenever you add or update posts to update the list of related posts. Only posts with a `post_updated_field` date greater than the last run will be processed.
+
+### Options
+
+You can pass options to the plugin to change its behavior. Options are passed after the command name. Not specifying an option is the same as specifying the default value.
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `--debug` | Most verbose. Sets log level to Debug. | Jekyll default |
+| `--quiet` | Do not print Info logs. Sets log level to Error. | Jekyll default |
+| `--future` | Generate embeddings and find related posts also for those with a future date. | `false` |
+| `--drafts` | Generate embeddings and find related posts also for drafts. | `false` |
+| `--dry-run` | Do not update the database, do not write related posts to disk. | `false` |
+
+Example:
+
+```sh
+bundle exec jekyll related --dry-run --future
+```
 
 ## Jekyll integration
 
