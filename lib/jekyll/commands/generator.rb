@@ -36,8 +36,9 @@ module Jekyll
                 Jekyll.logger.log_level = :error
               end
 
-              mode = ENV["JEKYLL_ENV"] == "production" ? "PRODUCTION" : "development"
-              Jekyll.logger.info "\nWorking in ** #{mode} ** mode\n"
+              env = ENV["JEKYLL_ENV"]
+              env_msg = env ? "in ** #{env} ** environment" : "environment NOT SET"
+              Jekyll.logger.info "\nWorking #{env_msg}\n"
               Jekyll.logger.info "\n*** Running in dry-run mode ***\n" if options["dryrun"]
 
               Jekyll.logger.info "Show drafts? #{options["show_drafts"] ? "Yes" : "No"}"

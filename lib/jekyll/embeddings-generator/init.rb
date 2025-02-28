@@ -25,6 +25,11 @@ module Jekyll
         config["db_table"] = jk_config["db_table"] || "page_embeddings"
         config["db_function"] = jk_config["db_function"] || "cosine_similarity"
 
+        # use different table and stored procedure names for each environemnt, if set
+        env = ENV["JEKYLL_ENV"] ? "_#{ENV["JEKYLL_ENV"]}" : ""
+        config["db_table"] = "#{config["db_table"]}#{env}"
+        config["db_function"] = "#{config["db_function"]}#{env}"
+
         Jekyll.logger.debug "Configuration:", config
 
         @config = config
