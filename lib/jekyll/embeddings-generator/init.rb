@@ -22,6 +22,8 @@ module Jekyll
         config["openai_api_key"] = ENV["OPENAI_API_KEY"]
         config["supabase_url"] = ENV["SUPABASE_URL"]
         config["supabase_key"] = ENV["SUPABASE_KEY"]
+        config["db_table"] = jk_config["db_table"] || "page_embeddings"
+        config["db_function"] = jk_config["db_function"] || "cosine_similarity"
         @config = config
         validate
         config

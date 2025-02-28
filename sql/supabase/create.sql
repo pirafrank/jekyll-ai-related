@@ -20,7 +20,7 @@ using ivfflat (embedding vector_cosine_ops)
 with (lists = 100);
 
 -- create a Postgres function to safely execute the similarity search
-create or replace function related_posts(query text)
+create or replace function cosine_similarity(query text)
 returns table (
   title text,
   uid varchar(255),

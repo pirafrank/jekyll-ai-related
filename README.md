@@ -71,6 +71,8 @@ jekyll-ai-related:
   related_posts_limit: 3
   related_posts_score_threshold: 0.5
   precision: 3
+  db_table: page_embeddings
+  db_function: cosine_similarity
 ```
 
 Configuration is optional. The plugin will use the default values if not provided.
@@ -87,6 +89,8 @@ Configuration is optional. The plugin will use the default values if not provide
 | `related_posts_limit` | integer | The maximum number of related posts to extract per post | `3` |
 | `related_posts_score_threshold` | float | The minimum similarity score to consider a post related | `0.5` |
 | `precision` | integer | The number of decimal digits to round similarity scores to | `3` |
+| `db_table` | string | The name of the table where the embeddings are stored | `page_embeddings` |
+| `db_function` | string | The name of the function to calculate similarity scores | `cosine_similarity` |
 
 > [!NOTE]
 > `related_posts_limit` and `related_posts_score_threshold` are used to filter the list of related posts. The plugin will return the top `related_posts_limit` posts with a similarity score greater than `related_posts_score_threshold`. A post may have 0 or more than `related_posts_limit` related posts, but only the top `related_posts_limit` will be returned, if any.
