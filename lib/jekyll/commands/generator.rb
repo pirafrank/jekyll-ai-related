@@ -17,10 +17,10 @@ module Jekyll
                      "Do not print Info logs. Set log level to Error."
             c.option "future",
                      "--future",
-                     "Get embeds and fine related posts also for those with a future date."
+                     "Generate embeddings and find related posts also for those with a future date."
             c.option "drafts",
                      "--drafts",
-                     "Get embeds and find related posts also for drafts."
+                     "Generate embeddings and find related posts also for drafts."
             c.option "dryrun",
                      "--dry-run",
                      "Do not update the database, do not write related posts to disk."
@@ -28,6 +28,13 @@ module Jekyll
             c.action do |_, opts|
               Jekyll.logger.info "\nAI Related plugin starting...\n"
               options = configuration_from_options(opts)
+
+              # Configure logging level
+              if options["debug"]
+                Jekyll.logger.log_level = :debug
+              elsif options["quiet"]
+                Jekyll.logger.log_level = :error
+              end
 
               mode = ENV["JEKYLL_ENV"] == "production" ? "PRODUCTION" : "development"
               Jekyll.logger.info "\nWorking in ** #{mode} ** mode\n"
@@ -37,6 +44,10 @@ module Jekyll
               Jekyll.logger.info "Include future posts? #{options["future"] ? "Yes" : "No"}"
 
               Jekyll::EmbeddingsGenerator.run(options)
+
+              # back to default log level
+              Jekyll.logger.log_level = :info
+              Jekyll.logger.info "\nAI Related plugin finished. Bye!\n"
             end
           end
         end
