@@ -13,10 +13,11 @@ module Jekyll
           config = Jekyll::EmbeddingsGenerator.config
           supabase_url = config["supabase_url"]
           supabase_key = config["supabase_key"]
+          table = config["db_table"]
 
           # First check if record exists and its edit date
           existing = HTTParty.get(
-            "#{supabase_url}/rest/v1/page_embeddings",
+            "#{supabase_url}/rest/v1/#{table}",
             :headers => {
               "apikey"          => supabase_key,
               "Authorization"   => "Bearer #{supabase_key}",
@@ -38,7 +39,8 @@ module Jekyll
           mre = data.most_recent_edit
           should_update = existing_record.nil? || Time.parse(existing_record["most_recent_edit"]) < mre
 
-          false unless should_update
+          Jekyll.logger.debug "Embeddings Generator:", "Should update? #{should_update ? "Yes" : "No"}"
+          return false unless should_update
 
           update_embedding(data)
         end
@@ -54,11 +56,19 @@ module Jekyll
 
         def update_embedding(data)
           config = Jekyll::EmbeddingsGenerator.config
+          if config["dryrun"]
+            Jekyll.logger.info "Related posts:",
+                               "Dry run enabled, skipping database update. If this is the first run, please disable dry run."
+            return
+          else
+            Jekyll.logger.info "Embeddings Generator:", "Updating database for post: #{data.metadata[:title]}"
+          end
           supabase_url = config["supabase_url"]
           supabase_key = config["supabase_key"]
+          table = config["db_table"]
 
           response = HTTParty.post(
-            "#{supabase_url}/rest/v1/page_embeddings",
+            "#{supabase_url}/rest/v1/#{table}",
             :headers => {
               "apikey"        => supabase_key,
               "Authorization" => "Bearer #{supabase_key}",
@@ -86,8 +96,10 @@ module Jekyll
           config = Jekyll::EmbeddingsGenerator.config
           supabase_url = config["supabase_url"]
           supabase_key = config["supabase_key"]
+          table = config["db_table"]
+
           response = HTTParty.get(
-            "#{supabase_url}/rest/v1/page_embeddings",
+            "#{supabase_url}/rest/v1/#{table}",
             headers: {
               "apikey"          => supabase_key,
               "Authorization"   => "Bearer #{supabase_key}",
@@ -108,8 +120,12 @@ module Jekyll
           config = Jekyll::EmbeddingsGenerator.config
           supabase_url = config["supabase_url"]
           supabase_key = config["supabase_key"]
+          table = config["db_table"]
+          db_function = config["db_function"]
           score_threshold = config["score_threshold"]
           limit = config["limit"] || 3
+          precision = config["precision"] || 3
+
           # Query using cosine similarity
           # Note: this MUST be a stored procedure on Supabase, and order of
           #       columns in 'select' statament must match the order of the
@@ -121,15 +137,15 @@ module Jekyll
                       most_recent_edit,
                       metadata->>'url' as url,
                       metadata->>'date' as date,
-                      1 - (embedding <=> '#{embedding}') as similarity
-                    from page_embeddings
+                      TRUNC((1 - (embedding <=> '#{embedding}'))::numeric, #{precision}) as similarity
+                    from #{table}
                     where uid != '#{post_uid}'
                     and 1 - (embedding <=> '#{embedding}') > '#{score_threshold}'
                     order by embedding <=> '#{embedding}'
                     limit '#{limit}';
                   )
           response = HTTParty.post(
-            "#{supabase_url}/rest/v1/rpc/related_posts",
+            "#{supabase_url}/rest/v1/rpc/#{db_function}",
             headers: {
               "apikey"          => supabase_key,
               "Authorization"   => "Bearer #{supabase_key}",

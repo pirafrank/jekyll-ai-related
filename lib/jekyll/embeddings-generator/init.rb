@@ -15,11 +15,23 @@ module Jekyll
         config["path"] = jk_config["output_path"] || "related_posts"
         config["drafts"] = jk_config["include_drafts"] || opts["drafts"] || false
         config["future"] = jk_config["include_future"] || opts["future"] || false
+        config["dryrun"] = opts["dryrun"] || false
         config["limit"] = jk_config["related_posts_limit"] || 3
         config["score_threshold"] = jk_config["related_posts_score_threshold"] || 0.5
+        config["precision"] = jk_config["precision"] || 3
         config["openai_api_key"] = ENV["OPENAI_API_KEY"]
         config["supabase_url"] = ENV["SUPABASE_URL"]
         config["supabase_key"] = ENV["SUPABASE_KEY"]
+        config["db_table"] = jk_config["db_table"] || "page_embeddings"
+        config["db_function"] = jk_config["db_function"] || "cosine_similarity"
+
+        # use different table and stored procedure names for each environemnt, if set
+        env = ENV["JEKYLL_ENV"] ? "_#{ENV["JEKYLL_ENV"]}" : ""
+        config["db_table"] = "#{config["db_table"]}#{env}"
+        config["db_function"] = "#{config["db_function"]}#{env}"
+
+        Jekyll.logger.debug "Configuration:", config
+
         @config = config
         validate
         config
@@ -28,8 +40,6 @@ module Jekyll
       def self.build(options)
         options["show_drafts"] = @config["drafts"]
         options["future"] = @config["future"]
-        Jekyll.logger.debug "Show drafts? #{options["show_drafts"]}"
-        Jekyll.logger.debug "Include future posts? #{options["future"]}"
         site = Jekyll::Site.new(options)
         site.reset
         site.read

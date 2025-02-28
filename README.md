@@ -41,7 +41,7 @@ end
 
 2. Run `bundle install`
 
-### From git
+### Install from git
 
 Alternatively, you can get code straight from this repository. Code from `main` branch should be stable enough but may contain unreleased software with bugs or breaking changes. Unreleased software should be considered of beta quality.
 
@@ -70,6 +70,9 @@ jekyll-ai-related:
   include_future: false
   related_posts_limit: 3
   related_posts_score_threshold: 0.5
+  precision: 3
+  db_table: page_embeddings
+  db_function: cosine_similarity
 ```
 
 Configuration is optional. The plugin will use the default values if not provided.
@@ -85,6 +88,9 @@ Configuration is optional. The plugin will use the default values if not provide
 | `include_future` | boolean | Whether to include future posts in the list of related posts | `false` |
 | `related_posts_limit` | integer | The maximum number of related posts to extract per post | `3` |
 | `related_posts_score_threshold` | float | The minimum similarity score to consider a post related | `0.5` |
+| `precision` | integer | The number of decimal digits to round similarity scores to | `3` |
+| `db_table` | string | The name of the table where the embeddings are stored | `page_embeddings` |
+| `db_function` | string | The name of the function to calculate similarity scores | `cosine_similarity` |
 
 > [!NOTE]
 > `related_posts_limit` and `related_posts_score_threshold` are used to filter the list of related posts. The plugin will return the top `related_posts_limit` posts with a similarity score greater than `related_posts_score_threshold`. A post may have 0 or more than `related_posts_limit` related posts, but only the top `related_posts_limit` will be returned, if any.
@@ -123,6 +129,49 @@ bundle exec jekyll related
 
 > [!IMPORTANT]
 > Re-run the plugin whenever you add or update posts to update the list of related posts. Only posts with a `post_updated_field` date greater than the last run will be processed.
+
+### Options
+
+You can pass options to the plugin to change its behavior. Options are passed after the command name. Not specifying an option is the same as specifying the default value.
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `--debug` | Most verbose. Sets log level to Debug. | Jekyll default |
+| `--quiet` | Do not print Info logs. Sets log level to Error. | Jekyll default |
+| `--future` | Generate embeddings and find related posts also for those with a future date. | `false` |
+| `--drafts` | Generate embeddings and find related posts also for drafts. | `false` |
+| `--dry-run` | Do not update the database, do not write related posts to disk. | `false` |
+
+Example:
+
+```sh
+bundle exec jekyll related --dry-run --future
+```
+
+### Environments
+
+Jekyll AI Related can optionally use the `JEKYLL_ENV` environment variable to determine where is running. This allows you to have separate tables and functions for different environments, for example for development and production.
+
+When `JEKYLL_ENV` is set, the plugin will append its value to `db_table` and `db_function` configuration options, separated by a `_` character. If it is not set, the plugin won't append anything. You must set `JEKYLL_ENV` every time you run the plugin to use environments.
+
+> [!IMPORTANT]
+> You need to make sure you have the corresponding tables and functions on your Supabase project. Edit the committed SQL script accordingly. They work with no modification when `JEKYLL_ENV` is not set.
+
+For example, if you `export JEKYLL_ENV=production` and have the configuration below
+
+```yaml
+jekyll-ai-related:
+  db_table: cool_table_name
+  db_function: cool_function_name
+```
+
+the plugin will use:
+
+- `cool_table_name_production` as the database table name,
+- `cool_function_name_production` as the database function name.
+
+> [!TIP]
+> Explicitly declare `JEKYLL_ENV=production` to avoid overwriting production data by mistake.
 
 ## Jekyll integration
 
