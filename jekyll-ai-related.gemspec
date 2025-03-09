@@ -25,8 +25,9 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "https://github.com/pirafrank/jekyll-ai-related/blob/main/CHANGELOG.md"
   spec.metadata["bug_tracker_uri"] = "https://github.com/pirafrank/jekyll-ai-related/issues"
 
+  spec.add_runtime_dependency "jekyll", ">= 3.7", "< 5.0"
+
   spec.add_dependency "httparty", "~> 0.22.0"
-  spec.add_dependency "jekyll", ">= 3.7", "< 5.0"
   spec.add_dependency "json", "~> 2.7"
 
   spec.add_development_dependency "bundler", "~> 2.6"
