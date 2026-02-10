@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-Migration notes are available in the [migration guide](https://github.com/pirafrank/jekyll-ai-related/blob/main/MIGRATE.md).
+Migration notes for breaking changes are available in the [migration guide](https://github.com/pirafrank/jekyll-ai-related/blob/main/MIGRATE.md).
+
+## [0.2.1] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- Specify jekyll dependency as runtime one
+- Support httparty minor version updates
+
+### ⚙️ Miscellaneous Tasks
+
+- *(doc)* Fix bad links
+- Add 'improved' to git cliff config
 
 ## [0.2.0] - 2025-02-28
 

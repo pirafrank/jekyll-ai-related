@@ -12,7 +12,7 @@ end
 task lint: :rubocop
 
 task :changelog do
-  sh "git cliff --tag #{Gem::Specification.load('jekyll-ai-related.gemspec').version} -o CHANGELOG.md"
+  sh "git cliff --tag #{Gem::Specification.load("jekyll-ai-related.gemspec").version} -o CHANGELOG.md"
 end
 
 task :mkrelease do
