@@ -34,6 +34,12 @@ cosine_similarity_production(text)
 
 Copy and adapt the SQL before running it. Keep development and production credentials and table names separate.
 
+> [!IMPORTANT]
+> You must ensure that the corresponding tables, indexes, and functions exist in the Supabase project before running the plugin. Edit the committed SQL script to create the environment-specific names you configure. The scripts work without modification when `JEKYLL_ENV` is not set and the default `page_embeddings` table and `cosine_similarity` function are used.
+
+> [!TIP]
+> Explicitly set `JEKYLL_ENV=production` for production runs to avoid accidentally writing development or production data to the wrong table.
+
 ## Index considerations
 
 The supplied schema uses:
@@ -54,4 +60,3 @@ To rebuild vectors safely, create or select an isolated table, run the plugin wi
 ## Security note
 
 The default RPC function is `SECURITY DEFINER` and executes query text supplied by the plugin. Review ownership, execute grants, search path, and exposure before using it in a shared or untrusted Supabase project. See [Security](SECURITY.md).
-

@@ -1,6 +1,6 @@
 # Migrate
 
-Migration instructions when breaking changes are introduced.
+This file is the compatibility entry point for migration guidance. See the complete [migration and rebuild guide](docs/MIGRATIONS.md) for current procedures.
 
 ## From 0.1.0 to 0.2.0
 
@@ -18,6 +18,4 @@ If you are upgrading from `v0.1.0`, you need drop the data and re-run the plugin
 
 ### Environments support
 
-This version also introduces the concept of *environments*. It reads `JEKYLL_ENV` env var to allow you to have different tables and functions for different environments.
-
-You need to set `JEKYLL_ENV` every time you run the plugin to use this feature. It can be set to anything, like `ci`, `dev`, or `production`. Not setting the env var will make the plugin behave like version `0.1.0`.
+This version also introduced environment-specific table and function names through `JEKYLL_ENV`. See the [environment migration guidance](docs/MIGRATIONS.md#environment-migration) for setup and safety details.

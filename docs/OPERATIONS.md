@@ -11,6 +11,9 @@ bundle exec jekyll build
 
 Review the generated `_data/<output_path>` files and commit them if generated data is part of the site's source workflow.
 
+> [!IMPORTANT]
+> Re-run the plugin whenever you add or update posts to refresh the related-post lists. The timestamp comparison prevents unchanged rows from being upserted, but the current implementation still generates an OpenAI embedding for every included post on each run.
+
 ## Dry runs
 
 ```sh
@@ -42,4 +45,3 @@ Files are written under `_data/<output_path>` and existing files for a post are 
 ## Environment isolation
 
 Use distinct table and RPC names for development, CI, staging, and production. Verify the effective environment in command logs before running a write-enabled command.
-

@@ -25,7 +25,10 @@ For `output_path: related_posts` and `post_unique_field: slug`, use:
 {% endif %}
 ```
 
-Results are ordered from highest similarity to lowest similarity. Each item normally contains:
+> [!NOTE]
+> The plugin writes results in descending similarity order: the most similar post appears first. To display them in the opposite order, reverse the collection in the Liquid loop or assign a reversed copy before iterating.
+
+Each item normally contains:
 
 ```yaml
 - title: Related post
@@ -53,4 +56,3 @@ the lookup becomes `site.data.ai.related[page.uid]` and files are written below 
 The plugin writes only non-empty result sets. If a post no longer has qualifying related posts, an existing YAML file is not deleted automatically. Remove stale generated files as part of a cleanup step if that situation matters to the site.
 
 The related data is generated outside a normal build, so a build can use the last successful output. This also means a post can be published before its related-post data has been regenerated.
-

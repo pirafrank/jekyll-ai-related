@@ -29,6 +29,9 @@ jekyll-ai-related:
 | `db_table` | string | `page_embeddings` | Supabase table containing vectors. |
 | `db_function` | string | `cosine_similarity` | Supabase RPC function used for the search. |
 
+> [!NOTE]
+> `related_posts_limit` and `related_posts_score_threshold` work together: the plugin returns up to `related_posts_limit` posts whose similarity is greater than `related_posts_score_threshold`. A post can have no qualifying related posts, and the threshold can result in fewer results than the limit.
+
 CLI flags are invocation-level overrides for drafts, future posts, and dry run:
 
 ```text
@@ -65,3 +68,14 @@ Missing credentials stop configuration validation before processing posts.
 
 Configuration values come from `_config.yml` and defaults; CLI flags can enable drafts, future posts, and dry run for the current command. `post_unique_field` and `post_updated_field` must exist on every processed post. The current implementation generates an OpenAI embedding for every processed post, even when its stored timestamp means no database upsert is needed.
 
+## Advanced custom fields
+
+Sites can use custom post metadata for identity and freshness. For example, a plugin that adds a unique `uid` and a `most_recent_edit` field can use:
+
+```yaml
+jekyll-ai-related:
+  post_unique_field: uid
+  post_updated_field: most_recent_edit
+```
+
+The fields must be available on the post after Jekyll's generators have run. `uid` must be unique across the configured Supabase table, and `most_recent_edit` must be comparable with the stored timestamp.
