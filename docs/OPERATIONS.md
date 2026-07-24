@@ -1,0 +1,45 @@
+# Operations
+
+## Recommended workflow
+
+Run the command after adding or editing posts:
+
+```sh
+bundle exec jekyll related
+bundle exec jekyll build
+```
+
+Review the generated `_data/<output_path>` files and commit them if generated data is part of the site's source workflow.
+
+## Dry runs
+
+```sh
+bundle exec jekyll related --dry-run --debug
+```
+
+Dry run skips database upserts and YAML writes. It still builds the Jekyll site, calls OpenAI for each included post, checks Supabase, and performs similarity reads. It cannot populate a new database.
+
+## CI/CD
+
+Store the three credentials as CI secrets. Set `JEKYLL_ENV` explicitly in deployments, especially when production and development tables coexist:
+
+```sh
+JEKYLL_ENV=production bundle exec jekyll related
+```
+
+A CI job should fail on command errors, preserve or publish generated `_data` files, and run the regular Jekyll build afterward. The repository does not provide a CI workflow for site consumers, so the exact job configuration is site-specific.
+
+## Cost and runtime
+
+Processing is sequential and makes one OpenAI request per included post on every invocation. The timestamp comparison saves unchanged Supabase writes but does not save embedding API calls. Large sites should account for API cost, rate limits, and command duration.
+
+The code has no explicit retry or timeout policy. If a request fails, investigate the error and rerun the command; partial database updates may already have occurred.
+
+## Generated files
+
+Files are written under `_data/<output_path>` and existing files for a post are overwritten. Empty search results do not delete old files. Decide whether your project commits these files or generates them in CI, and add cleanup for deleted posts or changed identifiers if necessary.
+
+## Environment isolation
+
+Use distinct table and RPC names for development, CI, staging, and production. Verify the effective environment in command logs before running a write-enabled command.
+
