@@ -61,6 +61,8 @@ module Jekyll
           config = Jekyll::EmbeddingsGenerator.config
           post_uid = post.data[config["uid"]]
           embedding = query_embeddings(post_uid)
+          return [] if embedding.nil? || embedding.empty?
+
           find_related_posts(embedding, post_uid)
         end
 

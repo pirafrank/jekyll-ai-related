@@ -78,6 +78,22 @@ class StoreCacheTest < Minitest::Test
     assert Jekyll::EmbeddingsGenerator::Store.should_upsert?(data, existing)
   end
 
+  def test_find_related_returns_no_results_when_source_embedding_is_missing
+    post = Jekyll::EmbeddingsGenerator::TestHelpers.build_post(
+      slug: "missing-embedding",
+      content: "content"
+    )
+
+    Jekyll::EmbeddingsGenerator::Store.stub(:query_embeddings, nil) do
+      Jekyll::EmbeddingsGenerator::Store.stub(
+        :find_related_posts,
+        ->(_embedding, _post_uid) { raise "similarity search should be skipped" }
+      ) do
+        assert_empty Jekyll::EmbeddingsGenerator::Store.find_related(post)
+      end
+    end
+  end
+
   private
 
   def build_data(slug, content, date)
