@@ -66,7 +66,7 @@ Missing credentials stop configuration validation before processing posts.
 
 ## Precedence and important behavior
 
-Configuration values come from `_config.yml` and defaults; CLI flags can enable drafts, future posts, and dry run for the current command. `post_unique_field` and `post_updated_field` must exist on every processed post. The current implementation generates an OpenAI embedding for every processed post, even when its stored timestamp means no database upsert is needed.
+Configuration values come from `_config.yml` and defaults; CLI flags can enable drafts, future posts, and dry run for the current command. `post_unique_field` and `post_updated_field` must exist on every processed post. The plugin computes a content fingerprint before calling OpenAI and reuses stored vectors when the fingerprint matches. Metadata-only changes still trigger a database upsert when the configured update timestamp is newer than the stored value.
 
 ## Advanced custom fields
 

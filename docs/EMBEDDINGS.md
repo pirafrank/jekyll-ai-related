@@ -34,12 +34,19 @@ The default table is `page_embeddings` (or `page_embeddings_<JEKYLL_ENV>` when a
 | `most_recent_edit` | timestamptz | Source post update value used for freshness checks |
 | `content` | text | Post content sent to OpenAI |
 | `embedding` | `vector(1536)` | OpenAI embedding |
+| `embedding_fingerprint` | text | SHA-256 cache key for the model and rendered content |
 | `metadata` | jsonb | Selected display and navigation metadata |
 | `created_at` | timestamptz | Insert timestamp |
 
 The metadata object is built from these post fields when present: `title`, `subtitle`, `description`, `date`, `slug`, `uid`, `url`, `categories`, `tags`, `updates`, and `most_recent_edit` (stored under the metadata key `last_edit`). Values that are `nil` are omitted. The configurable `post_updated_field` controls freshness, but it does not change which field the metadata builder reads for `last_edit`.
 
-The plugin upserts with `on_conflict=uid`. Before the upsert it performs a GET for the same `uid`, selecting only `uid` and `most_recent_edit`. It writes when no row exists or when the source timestamp is newer than the stored timestamp.
+The plugin upserts with `on_conflict=uid`. Before calling OpenAI it performs a GET for the same `uid`, selecting `uid`, `most_recent_edit`, `embedding_fingerprint`, and `embedding`. It reuses the stored vector when the computed fingerprint matches the stored fingerprint. It calls OpenAI when no row exists, the fingerprint is null (legacy rows), or the fingerprint differs.
+
+It writes when no row exists, the fingerprint changed (new or edited content, or model change), or when the fingerprint is unchanged but the source timestamp is newer than the stored timestamp (metadata-only update).
+
+The fingerprint is a SHA-256 hex digest of the embedding model identifier and the exact rendered `post.content`, separated by a null byte. Changing either the model or the content invalidates the cache.
+
+Existing installations must run [`sql/supabase/migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrate_add_embedding_fingerprint.sql) on each `page_embeddings` table (including environment-suffixed tables). Rows without a fingerprint are re-embedded once on the next write-enabled run.
 
 ## Similarity calculation
 
@@ -85,16 +92,16 @@ For an environment suffix, create matching suffixed tables, indexes, and functio
 
 ## Run behavior and cost
 
-The command processes posts one at a time. For each included post it performs an OpenAI embedding request and then Supabase requests for freshness, possible upsert, vector retrieval, and related-post search. A normal rerun therefore still incurs embedding API calls for unchanged posts; only unchanged database rows avoid the upsert.
+The command processes posts one at a time. For each included post it fetches the existing row, compares fingerprints, and calls OpenAI only on cache misses (new posts, edited content, legacy rows without a fingerprint, or after a model change). Supabase requests still occur for every included post: cache lookup, possible upsert, vector retrieval, and related-post search.
 
-`--dry-run` skips the upsert and skips writing YAML, but it still performs embedding generation and related-post reads. A first dry run cannot populate an empty database, so a later non-dry run is required before similarity results can be complete.
+`--dry-run` skips the upsert and skips writing YAML, but it may still call OpenAI for cache misses and still performs related-post reads. A first dry run cannot populate an empty database, so a later non-dry run is required before similarity results can be complete.
 
 If no source vector is found in Supabase, the lookup returns no vector and the subsequent similarity query cannot produce a meaningful result. In practice, run a non-dry command successfully against the intended table before relying on generated related-post files.
 
 ## Compatibility and maintenance notes
 
 - Keep the database vector dimension aligned with the model response.
-- Keep `post_updated_field` populated with a value comparable to the stored `timestamptz`; it controls whether a vector is refreshed.
+- Keep `post_updated_field` populated with a value comparable to the stored `timestamptz`; it controls metadata-only upserts when content is unchanged.
 - Changing the embedding model, embedding dimensions, or content normalization strategy requires rebuilding the stored vectors and updating the schema/index as appropriate.
 - Changing the metadata fields or result shape requires updating both the Ruby consumer and the Supabase function return definition.
 - The current SQL function executes query text supplied by the plugin. Restrict access to the RPC/database objects appropriately and do not expose the function as a general-purpose arbitrary SQL endpoint.

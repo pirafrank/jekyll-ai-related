@@ -3,6 +3,7 @@
 require_relative "commands/generator"
 require_relative "embeddings-generator/init"
 require_relative "embeddings-generator/version"
+require_relative "embeddings-generator/embeddings/fingerprint"
 require_relative "embeddings-generator/embeddings/generate"
 require_relative "embeddings-generator/embeddings/store"
 require_relative "embeddings-generator/models/data"
@@ -25,21 +26,32 @@ module Jekyll
 
       def extract_content
         Jekyll.logger.info "Embeddings Generator:", "Starting to process markdown files..."
-        # Generate and store embeddings per each post
-        @site.posts.docs.each do |post|
-          Jekyll.logger.info "Embeddings Generator:", "Processing post: #{post.data["title"]}"
-          # Extract content and metadata
-          content = post.content
-          metadata = Jekyll::EmbeddingsGenerator::Metadata.new(post)
-
-          # Generate embeddings using OpenAI API
-          embedding = Jekyll::EmbeddingsGenerator::Embeddings.generate_embeddings(content)
-
-          # Store in Supabase
-          data = Jekyll::EmbeddingsGenerator::Data.new(post, embedding, metadata)
-          Jekyll::EmbeddingsGenerator::Store.store_embedding(data)
-        end
+        @site.posts.docs.each { |post| process_post(post) }
         Jekyll.logger.info "Embeddings Generator:", "Finished processing markdown files."
+      end
+
+      def process_post(post)
+        Jekyll.logger.info "Embeddings Generator:", "Processing post: #{post.data["title"]}"
+        content = post.content
+        metadata = Jekyll::EmbeddingsGenerator::Metadata.new(post)
+        uid = post.data[@config["uid"]]
+        fingerprint = Jekyll::EmbeddingsGenerator::Embeddings.fingerprint(content)
+
+        existing = Jekyll::EmbeddingsGenerator::Store.fetch_record(uid)
+        embedding = resolve_embedding(post, content, existing, fingerprint)
+
+        data = Jekyll::EmbeddingsGenerator::Data.new(post, embedding, metadata, fingerprint)
+        Jekyll::EmbeddingsGenerator::Store.upsert_if_needed(data, existing)
+      end
+
+      def resolve_embedding(post, content, existing, fingerprint)
+        if Jekyll::EmbeddingsGenerator::Store.cache_hit?(existing, fingerprint)
+          Jekyll.logger.info "Embeddings Generator:", "Reusing cached embedding for: #{post.data["title"]}"
+          existing["embedding"]
+        else
+          Jekyll.logger.info "Embeddings Generator:", "Generating embedding for: #{post.data["title"]}"
+          Jekyll::EmbeddingsGenerator::Embeddings.generate_embeddings(content)
+        end
       end
 
       def write_related_posts

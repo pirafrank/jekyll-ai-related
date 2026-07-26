@@ -5,6 +5,7 @@ SQL scripts to create and drop tables and functions on a Supabase project.
 ## Scripts
 
 - `create.sql`: Creates the required table and functions.
+- `migrate_add_embedding_fingerprint.sql`: Adds `embedding_fingerprint` to existing tables.
 - `drop.sql`: Drops the table and functions.
 - `query.sql`: Used for debug.
 

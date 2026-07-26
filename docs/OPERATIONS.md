@@ -20,7 +20,7 @@ Review the generated `_data/<output_path>` files and commit them if generated da
 bundle exec jekyll related --dry-run --debug
 ```
 
-Dry run skips database upserts and YAML writes. It still builds the Jekyll site, calls OpenAI for each included post, checks Supabase, and performs similarity reads. It cannot populate a new database.
+Dry run skips database upserts and YAML writes. It still builds the Jekyll site, may call OpenAI for cache misses, checks Supabase, and performs similarity reads. It cannot populate a new database.
 
 ## CI/CD
 
@@ -34,7 +34,7 @@ A CI job should fail on command errors, preserve or publish generated `_data` fi
 
 ## Cost and runtime
 
-Processing is sequential and makes one OpenAI request per included post on every invocation. The timestamp comparison saves unchanged Supabase writes but does not save embedding API calls. Large sites should account for API cost, rate limits, and command duration.
+Processing is sequential. OpenAI is called only on cache misses: new posts, edited content, legacy rows without a fingerprint, or after an embedding model change. Supabase reads and similarity searches still run for every included post. The timestamp comparison still controls metadata-only upserts when content is unchanged.
 
 The code has no explicit retry or timeout policy. If a request fails, investigate the error and rerun the command; partial database updates may already have occurred.
 

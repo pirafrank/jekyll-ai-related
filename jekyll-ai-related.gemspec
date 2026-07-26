@@ -31,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "json", "~> 2.7"
 
   spec.add_development_dependency "bundler", "~> 2.6"
+  spec.add_development_dependency "minitest", "~> 5.25"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rubocop-jekyll", "~> 0.14"
 end

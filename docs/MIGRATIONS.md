@@ -1,5 +1,11 @@
 # Migrations and rebuilds
 
+## Adding embedding fingerprint cache (0.2.2+)
+
+Run [`sql/supabase/migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrate_add_embedding_fingerprint.sql) on every `page_embeddings` table you use, including environment-suffixed tables such as `page_embeddings_production`.
+
+Existing rows keep a null `embedding_fingerprint` and are re-embedded once on the next write-enabled run. After that, unchanged posts skip OpenAI calls. No full table rebuild is required unless you also change the embedding model or dimensions.
+
 ## From 0.1.0 to 0.2.0
 
 Version 0.2.0 introduced `precision`, configurable `db_table` and `db_function`, and environment suffixes. Follow [`MIGRATE.md`](../MIGRATE.md) for the project migration notes.

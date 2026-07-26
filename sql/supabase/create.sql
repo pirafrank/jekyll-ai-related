@@ -9,6 +9,7 @@ create table page_embeddings (
   most_recent_edit timestamp with time zone default timezone('Europe/Rome'::text, now()) not null,
   content text,
   embedding vector(1536),
+  embedding_fingerprint text,
   metadata jsonb,
   created_at timestamp with time zone default timezone('Europe/Rome'::text, now())
 );

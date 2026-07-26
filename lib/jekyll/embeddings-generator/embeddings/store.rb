@@ -6,38 +6,50 @@ require "json"
 module Jekyll
   module EmbeddingsGenerator
     module Store
+      RECORD_SELECT = "uid,most_recent_edit,embedding_fingerprint,embedding"
+
       class << self
         include Jekyll::EmbeddingsGenerator
 
-        def store_embedding(data) # rubocop:disable Metrics/AbcSize
+        def fetch_record(uid)
           config = Jekyll::EmbeddingsGenerator.config
-          supabase_url = config["supabase_url"]
-          supabase_key = config["supabase_key"]
-          table = config["db_table"]
-
-          # First check if record exists and its edit date
-          existing = HTTParty.get(
-            "#{supabase_url}/rest/v1/#{table}",
-            :headers => {
-              "apikey"          => supabase_key,
-              "Authorization"   => "Bearer #{supabase_key}",
-              "Content-Type"    => "application/json",
-              "Accept-Encoding" => "identity", # this to avoid supabase returning gzipped content
-            },
+          response = HTTParty.get(
+            "#{config["supabase_url"]}/rest/v1/#{config["db_table"]}",
+            :headers => supabase_headers(config),
             :query   => {
-              "uid"    => "eq.#{data.uid}",
-              "select" => "uid, most_recent_edit",
+              "uid"    => "eq.#{uid}",
+              "select" => RECORD_SELECT,
             }
           )
 
-          Jekyll.logger.debug "response headers: #{existing.headers}"
-          Jekyll.logger.debug "response body: #{existing.body}"
+          Jekyll.logger.debug "response headers: #{response.headers}"
+          Jekyll.logger.debug "response body: #{response.body}"
 
-          raise "Supabase API error: #{existing.code} - #{existing.body}" unless existing.success?
+          raise "Supabase API error: #{response.code} - #{response.body}" unless response.success?
 
-          existing_record = existing.parsed_response&.first
-          mre = data.most_recent_edit
-          should_update = existing_record.nil? || Time.parse(existing_record["most_recent_edit"]) < mre
+          response.parsed_response&.first
+        end
+
+        def cache_hit?(existing_record, fingerprint)
+          return false if existing_record.nil?
+          return false if existing_record["embedding_fingerprint"].nil?
+          return false if existing_record["embedding"].nil?
+
+          existing_record["embedding_fingerprint"] == fingerprint
+        end
+
+        def should_upsert?(data, existing_record)
+          return true if existing_record.nil?
+
+          fingerprint_changed = data.embedding_fingerprint != existing_record["embedding_fingerprint"]
+          metadata_newer = Time.parse(existing_record["most_recent_edit"].to_s) < data.most_recent_edit
+
+          fingerprint_changed || metadata_newer
+        end
+
+        def upsert_if_needed(data, existing_record = nil)
+          existing_record ||= fetch_record(data.uid)
+          should_update = should_upsert?(data, existing_record)
 
           Jekyll.logger.debug "Embeddings Generator:", "Should update? #{should_update ? "Yes" : "No"}"
           return false unless should_update
@@ -54,36 +66,41 @@ module Jekyll
 
         private
 
-        def update_embedding(data)
+        def supabase_headers(config)
+          supabase_key = config["supabase_key"]
+          {
+            "apikey"          => supabase_key,
+            "Authorization"   => "Bearer #{supabase_key}",
+            "Content-Type"    => "application/json",
+            "Accept-Encoding" => "identity",
+          }
+        end
+
+        def update_embedding(data) # rubocop:disable Metrics/AbcSize
           config = Jekyll::EmbeddingsGenerator.config
           if config["dryrun"]
             Jekyll.logger.info "Related posts:",
                                "Dry run enabled, skipping database update. If this is the first run, please disable dry run."
             return
-          else
-            Jekyll.logger.info "Embeddings Generator:", "Updating database for post: #{data.metadata[:title]}"
           end
-          supabase_url = config["supabase_url"]
-          supabase_key = config["supabase_key"]
-          table = config["db_table"]
+
+          Jekyll.logger.info "Embeddings Generator:", "Updating database for post: #{data.metadata[:title]}"
 
           response = HTTParty.post(
-            "#{supabase_url}/rest/v1/#{table}",
-            :headers => {
-              "apikey"        => supabase_key,
-              "Authorization" => "Bearer #{supabase_key}",
-              "Content-Type"  => "application/json",
-              "Prefer"        => "resolution=merge-duplicates", # upsert behavior
-            },
+            "#{config["supabase_url"]}/rest/v1/#{config["db_table"]}",
+            :headers => supabase_headers(config).merge(
+              "Prefer" => "resolution=merge-duplicates"
+            ),
             :query   => {
-              "on_conflict" => "uid", # important: this MUST be declared as unique on database
+              "on_conflict" => "uid",
             },
             :body    => {
-              :uid              => data.uid,
-              :most_recent_edit => data.most_recent_edit,
-              :embedding        => data.embedding,
-              :metadata         => data.metadata,
-              :content          => data.content,
+              :uid                   => data.uid,
+              :most_recent_edit      => data.most_recent_edit,
+              :embedding             => data.embedding,
+              :embedding_fingerprint => data.embedding_fingerprint,
+              :metadata              => data.metadata,
+              :content               => data.content,
             }.to_json
           )
 
@@ -94,18 +111,9 @@ module Jekyll
 
         def query_embeddings(post_uid)
           config = Jekyll::EmbeddingsGenerator.config
-          supabase_url = config["supabase_url"]
-          supabase_key = config["supabase_key"]
-          table = config["db_table"]
-
           response = HTTParty.get(
-            "#{supabase_url}/rest/v1/#{table}",
-            headers: {
-              "apikey"          => supabase_key,
-              "Authorization"   => "Bearer #{supabase_key}",
-              "Content-Type"    => "application/json",
-              "Accept-Encoding" => "identity", # this to avoid supabase returning gzipped content
-            },
+            "#{config["supabase_url"]}/rest/v1/#{config["db_table"]}",
+            headers: supabase_headers(config),
             query: {
               "uid" => "eq.#{post_uid}",
             }
@@ -119,17 +127,12 @@ module Jekyll
         def find_related_posts(embedding, post_uid)
           config = Jekyll::EmbeddingsGenerator.config
           supabase_url = config["supabase_url"]
-          supabase_key = config["supabase_key"]
           table = config["db_table"]
           db_function = config["db_function"]
           score_threshold = config["score_threshold"]
           limit = config["limit"] || 3
           precision = config["precision"] || 3
 
-          # Query using cosine similarity
-          # Note: this MUST be a stored procedure on Supabase, and order of
-          #       columns in 'select' statament must match the order of the
-          #       columns defined in the stored procedure.
           query = %(
                     select
                       metadata->>'title' as title,
@@ -146,13 +149,9 @@ module Jekyll
                   )
           response = HTTParty.post(
             "#{supabase_url}/rest/v1/rpc/#{db_function}",
-            headers: {
-              "apikey"          => supabase_key,
-              "Authorization"   => "Bearer #{supabase_key}",
-              "Content-Type"    => "application/json",
-              "Accept-Encoding" => "identity", # this to avoid supabase returning gzipped content
-              "Prefer"          => "return=minimal",
-            },
+            headers: supabase_headers(config).merge(
+              "Prefer" => "return=minimal"
+            ),
             body: {
               query:,
             }.to_json

@@ -74,6 +74,7 @@ GEM
     logger (1.7.0)
     mercenary (0.4.0)
     mini_mime (1.1.5)
+    minitest (5.27.0)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
     parallel (1.27.0)
@@ -132,6 +133,7 @@ PLATFORMS
 DEPENDENCIES
   bundler (~> 2.6)
   jekyll-ai-related!
+  minitest (~> 5.25)
   rake (~> 13.0)
   rubocop-jekyll (~> 0.14)
 

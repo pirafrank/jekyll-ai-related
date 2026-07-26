@@ -10,7 +10,9 @@ Run [`sql/supabase/create.sql`](../sql/supabase/create.sql) in the Supabase SQL 
 4. Adds an IVFFlat index using cosine distance.
 5. Creates the `cosine_similarity(text)` RPC function.
 
-The table stores `vector(1536)`, matching the current `text-embedding-3-small` response used by the code.
+The table stores `vector(1536)`, matching the current `text-embedding-3-small` response used by the code, and an optional `embedding_fingerprint` text column used to skip redundant OpenAI calls for unchanged content.
+
+Existing installations should run [`sql/supabase/migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrate_add_embedding_fingerprint.sql) before upgrading to a plugin version that uses fingerprint caching.
 
 ## Required API behavior
 

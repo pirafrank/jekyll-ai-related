@@ -2,6 +2,7 @@
 
 require "httparty"
 require "json"
+require_relative "fingerprint"
 
 module Jekyll
   module EmbeddingsGenerator
@@ -19,7 +20,7 @@ module Jekyll
               "Content-Type"  => "application/json",
             },
             :body    => {
-              :model => "text-embedding-3-small",
+              :model => EMBEDDING_MODEL,
               :input => text,
             }.to_json
           )
