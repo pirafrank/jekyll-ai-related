@@ -15,11 +15,18 @@ The implementation is under `lib/jekyll`; Supabase SQL is under `sql/supabase`.
 - `lib/jekyll/commands/generator.rb` registers `jekyll related`.
 - `lib/jekyll/processor.rb` coordinates processing.
 - `lib/jekyll/embeddings-generator/init.rb` builds configuration and the Jekyll site.
+- `lib/jekyll/embeddings-generator/embeddings/fingerprint.rb` computes model/content cache keys.
 - `lib/jekyll/embeddings-generator/embeddings/generate.rb` calls OpenAI.
 - `lib/jekyll/embeddings-generator/embeddings/store.rb` calls Supabase.
 - `lib/jekyll/embeddings-generator/models/` defines payload and metadata objects.
 
 ## Checks
+
+Run the test suite:
+
+```sh
+bundle exec rake test
+```
 
 Run RuboCop through the Rake task:
 
@@ -33,7 +40,7 @@ Build the gem with:
 bundle exec rake build
 ```
 
-The repository currently has no automated test suite. Changes to API payloads, SQL, configuration, or output should be validated against a disposable Jekyll site and isolated Supabase objects.
+Changes to API payloads, SQL, configuration, or output should also be validated against a disposable Jekyll site and isolated Supabase objects.
 
 ## Safe manual validation
 
@@ -48,4 +55,3 @@ The repository currently has no automated test suite. Changes to API payloads, S
 The version is defined in `lib/jekyll/embeddings-generator/version.rb`. The Rakefile provides gem build and publish tasks. The release workflow creates a GitHub release when a `v*.*.*` tag is pushed. Review `CHANGELOG.md` and `MIGRATE.md` for breaking changes before tagging.
 
 Avoid committing credentials, generated local artifacts, or changes to unrelated user work.
-

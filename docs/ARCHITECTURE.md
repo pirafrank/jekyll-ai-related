@@ -1,6 +1,6 @@
 # Architecture
 
-Jekyll AI Related is a Ruby gem that adds the `jekyll related` command to Jekyll. The command reads the site's posts, generates an embedding for each post through OpenAI, stores vectors and post metadata in Supabase/Postgres, performs a similarity search, and writes the resulting related-post lists into the site's `_data` directory.
+Jekyll AI Related is a Ruby gem that adds the `jekyll related` command to Jekyll. The command reads the site's posts, reuses cached embeddings when possible or generates them through OpenAI, stores vectors and post metadata in Supabase/Postgres, performs a similarity search, and writes the resulting related-post lists into the site's `_data` directory.
 
 The generated YAML is deliberately local to the site. A normal `jekyll build` can therefore consume related-post data without calling OpenAI or Supabase; the command is run separately when content changes.
 
@@ -46,8 +46,8 @@ The repository contains the gem code under `lib/`, the Supabase bootstrap SQL un
 1. Jekyll loads the gem and exposes `bundle exec jekyll related`.
 2. The command combines `_config.yml`, CLI flags, environment variables, and defaults. It validates `OPENAI_API_KEY`, `SUPABASE_URL`, and `SUPABASE_KEY`.
 3. A fresh Jekyll site is built with the configured draft and future-post settings. The site is read and generators are run.
-4. For every included post, the plugin extracts `post.content` and metadata, calls OpenAI, and constructs a `Data` record.
-5. The plugin checks Supabase for the post's `uid` and stored `most_recent_edit`. It upserts only when the row is missing or the post's configured update value is newer.
+4. For every included post, the plugin extracts `post.content` and metadata, computes a model/content fingerprint, and fetches the existing Supabase record.
+5. The plugin reuses the stored embedding when the fingerprint and vector are present; otherwise it calls OpenAI. It upserts when the row is missing, the fingerprint changed, or the configured update value is newer.
 6. For every included post, it fetches that post's stored embedding and submits a SQL query through the configured Supabase RPC function. The query excludes the current post, applies the score threshold, sorts by cosine distance, and limits the result count.
 7. Non-empty results are serialized as YAML to `_data/<output_path>/<safe-uid>.yml`. Existing files for the same post are overwritten; an empty result does not remove an older file.
 
@@ -90,8 +90,7 @@ The filename is lowercased and every character outside `[a-z0-9-_]` is replaced 
 
 - API keys are read only from environment variables and are sent in the OpenAI and Supabase HTTP headers.
 - The command is not part of the normal build path. Keep generated `_data` files available to the site build, and schedule `jekyll related` after creating or editing posts.
-- The current implementation calls OpenAI for every included post on every command invocation. The timestamp check prevents unnecessary database upserts, but it does not prevent the embedding API call.
-- `--dry-run` still reads from both services and generates embeddings; it skips Supabase updates and local file writes. It is therefore useful for exercising the flow, but it is not an offline mode.
+- OpenAI is called only for cache misses: new posts, changed rendered content, legacy rows without a fingerprint, or after an embedding model change. Supabase reads and similarity searches still run for every included post.
+- `--dry-run` still reads from both services and may generate embeddings for cache misses; it skips Supabase updates and local file writes. It is therefore useful for exercising the flow, but it is not an offline mode.
 - The included SQL uses an IVFFlat index with `vector_cosine_ops` and `lists = 100`. The vector dimension must remain compatible with the selected OpenAI model and the table definition.
 - The plugin uses raw SQL text assembled in Ruby and executes it through a `SECURITY DEFINER` PostgreSQL function. Table/function names and the SQL setup should be treated as trusted deployment configuration.
-

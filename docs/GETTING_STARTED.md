@@ -60,7 +60,7 @@ A useful first validation is:
 bundle exec jekyll related --dry-run --debug
 ```
 
-Dry-run mode still calls OpenAI and reads Supabase, but does not update the database or write files. Run without `--dry-run` to populate the database and generate output.
+Dry-run mode reads Supabase and may call OpenAI for cache misses, but does not update the database or write files. Run without `--dry-run` to populate the database and generate output.
 
 ## Use the output
 
@@ -71,4 +71,3 @@ _data/related_posts/my-post.yml
 ```
 
 Jekyll exposes it as `site.data.related_posts[page.slug]`. See [Integration](INTEGRATION.md) for a complete Liquid example.
-

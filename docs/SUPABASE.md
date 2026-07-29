@@ -12,7 +12,7 @@ Run [`sql/supabase/create.sql`](../sql/supabase/create.sql) in the Supabase SQL 
 
 The table stores `vector(1536)`, matching the current `text-embedding-3-small` response used by the code, and an optional `embedding_fingerprint` text column used to skip redundant OpenAI calls for unchanged content.
 
-Existing installations should run [`sql/supabase/migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrate_add_embedding_fingerprint.sql) before upgrading to a plugin version that uses fingerprint caching.
+Existing installations should run [`sql/supabase/migrations/v0.3.0/001_migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrations/v0.3.0/001_migrate_add_embedding_fingerprint.sql) before upgrading to a plugin version that uses fingerprint caching. For a suffixed table, change the table name in the migration before running it.
 
 ## Required API behavior
 

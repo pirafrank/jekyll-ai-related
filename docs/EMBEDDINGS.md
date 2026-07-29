@@ -46,7 +46,7 @@ It writes when no row exists, the fingerprint changed (new or edited content, or
 
 The fingerprint is a SHA-256 hex digest of the embedding model identifier and the exact rendered `post.content`, separated by a null byte. Changing either the model or the content invalidates the cache.
 
-Existing installations must run [`sql/supabase/migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrate_add_embedding_fingerprint.sql) on each `page_embeddings` table (including environment-suffixed tables). Rows without a fingerprint are re-embedded once on the next write-enabled run.
+Existing installations must run [`sql/supabase/migrations/v0.3.0/001_migrate_add_embedding_fingerprint.sql`](../sql/supabase/migrations/v0.3.0/001_migrate_add_embedding_fingerprint.sql) on each `page_embeddings` table (including environment-suffixed tables). For a suffixed table, change the table name in the migration before running it. Rows without a fingerprint are re-embedded once on the next write-enabled run.
 
 ## Similarity calculation
 

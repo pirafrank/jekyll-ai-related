@@ -4,62 +4,52 @@
 [![GitHub Release](https://img.shields.io/github/v/release/pirafrank/jekyll-ai-related)](https://github.com/pirafrank/jekyll-ai-related/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A [Jekyll](https://jekyllrb.com/) [command](https://jekyllrb.com/docs/plugins/commands/) plugin to generate list of related posts using AI.
+A [Jekyll](https://jekyllrb.com/) command plugin that uses OpenAI embeddings and Supabase/pgvector to generate related-post data for your blog.
 
-The plugin uses uses OpenAI API to generate embeddings from posts content, and stores them on Supabase vector database. A query on Supabase provides a similarity score between the post and all other posts on the site. The plugin then selects the most similar posts to generate the list of related posts.
+The plugin writes related-post results to `_data`, so normal `jekyll build` runs do not call OpenAI or Supabase. Run `jekyll related` when posts are added or changed, or run it in your CI pipeline.
 
-To avoid unnecessary API calls or slowing down the website generation, the plugin stores the list of related posts in the site's `_data` folder. This way you can `jekyll build` without calling the plugin or making API calls, while still having the list of related posts available as site data. You only need to re-run it when you add or update posts.
+## Quick start
 
-## Getting started
+### Requirements
 
-1. Setup Supabase
-2. Install the plugin
-3. Configure the plugin
-4. Run the plugin
+- Ruby `>= 3.2`
+- Jekyll `>= 3.7` and `< 5.0`
+- An OpenAI API key
+- A Supabase project with pgvector available
 
-## Requirements
+### 1. Create the database objects
 
-- OpenAI account and API key
-- Supabase account and API key
-- Supabase URL of the project where the DB is located
+Run [`sql/supabase/create.sql`](sql/supabase/create.sql) in the Supabase SQL editor. This creates the default `page_embeddings` table and `cosine_similarity` function.
 
-### Supabase setup
+For existing installations, follow the [migration guide](docs/MIGRATIONS.md), especially the v0.3.0 `embedding_fingerprint` column migration. See [Supabase setup](docs/SUPABASE.md) for environment-specific tables and maintenance.
 
-Use the `create.sql` script in the `sql\supabase` folder of this repo to create the required table and functions on your Supabase project. You can run the script in the SQL editor of the Supabase dashboard.
+### 2. Install the plugin
 
-You can always revert the changes by running the `drop.sql` script.
+Add the gem to the Jekyll site's `Gemfile`:
 
-## Installation
-
-1. Add the plugin to you Jekyll site's `Gemfile` in the `:jekyll_plugins` group:
-
-```Gemfile
+```ruby
 group :jekyll_plugins do
-  gem 'jekyll-ai-related'
+  gem "jekyll-ai-related"
 end
 ```
 
-2. Run `bundle install`
-
-### Install from git
-
-Alternatively, you can get code straight from this repository. Code from `main` branch should be stable enough but may contain unreleased software with bugs or breaking changes. Unreleased software should be considered of beta quality.
-
-```Gemfile
-group :jekyll_plugins do
-  gem 'jekyll-ai-related', git: 'https://github.com/pirafrank/jekyll-ai-related', branch: 'main'
-end
-```
-
-## Update
+Then install it:
 
 ```sh
-bundle update jekyll-ai-related
+bundle install
 ```
 
-## Configuration
+To use the unreleased `main` branch instead:
 
-Sample configuration to add to your `_config.yml`:
+```ruby
+group :jekyll_plugins do
+  gem "jekyll-ai-related", git: "https://github.com/pirafrank/jekyll-ai-related", branch: "main"
+end
+```
+
+### 3. Configure the site
+
+Add the plugin configuration to `_config.yml`:
 
 ```yaml
 jekyll-ai-related:
@@ -75,153 +65,74 @@ jekyll-ai-related:
   db_function: cosine_similarity
 ```
 
-Configuration is optional. The plugin will use the default values if not provided.
-
-### Configuration options
-
-| Option | Type | Description | Default Value |
-| --- | --- | --- | --- |
-| `post_unique_field` | string | A field that uniquely identifies a post | `slug` |
-| `post_updated_field` | string | A field that indicates when the post was last updated | `date` |
-| `output_path` | string | The subdir inside `_data` where related posts will be stored | `related_posts` |
-| `include_drafts` | boolean | Whether to include drafts in the list of related posts | `false` |
-| `include_future` | boolean | Whether to include future posts in the list of related posts | `false` |
-| `related_posts_limit` | integer | The maximum number of related posts to extract per post | `3` |
-| `related_posts_score_threshold` | float | The minimum similarity score to consider a post related | `0.5` |
-| `precision` | integer | The number of decimal digits to round similarity scores to | `3` |
-| `db_table` | string | The name of the table where the embeddings are stored | `page_embeddings` |
-| `db_function` | string | The name of the function to calculate similarity scores | `cosine_similarity` |
-
-> [!NOTE]
-> `related_posts_limit` and `related_posts_score_threshold` are used to filter the list of related posts. The plugin will return the top `related_posts_limit` posts with a similarity score greater than `related_posts_score_threshold`. A post may have 0 or more than `related_posts_limit` related posts, but only the top `related_posts_limit` will be returned, if any.
-
-### Advanced configuration
-
-You can customize the unique and updated fields, for example if you have a plugin that generates a unique ID for each post, or if you have a custom field that indicates when the post was last updated.
-
-Check the [post-metadata.rb](https://github.com/pirafrank/fpiracom/blob/8cc17a5801a73f7c8cbad4cbee099db18389b187/_plugins/post-metadata.rb) plugin of mine for an example. You can download and place it in your `_plugins` folder. It will add metadata to each `post` object and makes it accessible anywhere the `post` object is.
-
-If you do so, you could use the following configuration:
-
-```yaml
-jekyll-ai-related:
-  post_unique_field: uid
-  post_updated_field: most_recent_edit
-```
-
-## Usage
-
-To run, the plugin needs the OpenAI and Supabase API keys, and Supabase URL. The plugin expects them as environment variables.
+These defaults are optional. Set the required credentials in the environment:
 
 ```sh
 export OPENAI_API_KEY="your_openai_api_key"
-export SUPABASE_URL="your_supabase_url"
+export SUPABASE_URL="https://your-project.supabase.co"
 export SUPABASE_KEY="your_supabase_api_key"
 ```
 
-Never write API keys in your code or configuration files you commit.
+Never commit API keys. See the [configuration reference](docs/CONFIGURATION.md) for all settings and custom post fields.
 
-Then you can run the plugin with:
+### 4. Generate related posts
 
 ```sh
 bundle exec jekyll related
 ```
 
-> [!IMPORTANT]
-> Re-run the plugin whenever you add or update posts to update the list of related posts. Only posts with a `post_updated_field` date greater than the last run will be processed.
-
-### Options
-
-You can pass options to the plugin to change its behavior. Options are passed after the command name. Not specifying an option is the same as specifying the default value.
-
-| Option | Description | Default |
-| --- | --- | --- |
-| `--debug` | Most verbose. Sets log level to Debug. | Jekyll default |
-| `--quiet` | Do not print Info logs. Sets log level to Error. | Jekyll default |
-| `--future` | Generate embeddings and find related posts also for those with a future date. | `false` |
-| `--drafts` | Generate embeddings and find related posts also for drafts. | `false` |
-| `--dry-run` | Do not update the database, do not write related posts to disk. | `false` |
-
-Example:
+A useful validation run is:
 
 ```sh
-bundle exec jekyll related --dry-run --future
+bundle exec jekyll related --dry-run --debug
 ```
 
-### Environments
+Dry-run mode does not update Supabase or write YAML files, but it may call OpenAI for cache misses. Use a normal run to populate the database and generate output.
 
-Jekyll AI Related can optionally use the `JEKYLL_ENV` environment variable to determine where is running. This allows you to have separate tables and functions for different environments, for example for development and production.
+Generated data is written under `_data/related_posts/`, for example:
 
-When `JEKYLL_ENV` is set, the plugin will append its value to `db_table` and `db_function` configuration options, separated by a `_` character. If it is not set, the plugin won't append anything. You must set `JEKYLL_ENV` every time you run the plugin to use environments.
-
-> [!IMPORTANT]
-> You need to make sure you have the corresponding tables and functions on your Supabase project. Edit the committed SQL script accordingly. They work with no modification when `JEKYLL_ENV` is not set.
-
-For example, if you `export JEKYLL_ENV=production` and have the configuration below
-
-```yaml
-jekyll-ai-related:
-  db_table: cool_table_name
-  db_function: cool_function_name
+```text
+_data/related_posts/my-post.yml
 ```
 
-the plugin will use:
+See the [integration guide](docs/INTEGRATION.md) for using the data in Liquid templates.
 
-- `cool_table_name_production` as the database table name,
-- `cool_function_name_production` as the database function name.
+## Environments
 
-> [!TIP]
-> Explicitly declare `JEKYLL_ENV=production` to avoid overwriting production data by mistake.
+Set `JEKYLL_ENV` to isolate development, staging, and production data:
 
-## Jekyll integration
-
-The plugin generates a list of related posts for each post in the site. Yet it won't edit your posts or layouts to display the list. It's up to you to integrate it in your site.
-
-You can access the list in the `site.data.YOUR_output_path_NAME` object. For example, with the default settings you can access it with `site.data.related_posts[post.slug]`.
-
-Here's a snippet to add it to the bottom of your `_layouts/post.html` layout file. It works with the default configuration.
-
-```html
-{% if site.data.related_posts[page.slug] %}
-<div class="related-posts">
-  <h3>Related Posts</h3>
-  <ul>
-    {% for post in site.data.related_posts[page.slug] %}
-    <li>
-      <a href="{{ post.url }}">{{ post.title }}</a>
-      <br/>{{ post.date | date: "%B %d, %Y" }}
-    </li>
-    {% endfor %}
-  </ul>
-</div>
-{% endif %}
+```sh
+JEKYLL_ENV=production bundle exec jekyll related
 ```
 
-> [!NOTE]
-> The plugin writes posts in descending order of similarity score, from most similar to least similar. You can change the order by reversing the loop in the snippet above.
+The environment suffix is appended to the configured table and RPC function names, so the corresponding Supabase objects must already exist. See [Supabase setup](docs/SUPABASE.md) for details.
+
+## Documentation
+
+The [documentation index](docs/README.md) groups the complete guides by setup, operation, implementation, and development.
+
+- [Getting started](docs/GETTING_STARTED.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Migrations](docs/MIGRATIONS.md)
+- [Workflow and operations](docs/WORKFLOW.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Architecture and embeddings](docs/ARCHITECTURE.md), [embedding details](docs/EMBEDDINGS.md)
+- [Development](docs/DEVELOPMENT.md)
+- [Security](docs/SECURITY.md)
 
 ## Development
 
-Clone and run `bundle install` to get started.
+```sh
+bundle install
+bundle exec rake test
+bundle exec rake lint
+bundle exec rake build
+```
 
-Code lives in `lib/jekyll` directory. `lib/jekyll/commands/generator.rb` is the entry point of the plugin, as per Jekyll documentation. More details [here](https://jekyllrb.com/docs/plugins/commands/).
+See [Development](docs/DEVELOPMENT.md) for the repository layout, validation workflow, and release process.
 
-## Contributing
+## Contributing and license
 
-[Bug reports](https://github.com/pirafrank/jekyll-ai-related/issues) and [pull requests](https://github.com/pirafrank/jekyll-ai-related/pulls) are welcome on GitHub.
+[Bug reports](https://github.com/pirafrank/jekyll-ai-related/issues) and [pull requests](https://github.com/pirafrank/jekyll-ai-related/pulls) are welcome. The project is available under the [MIT License](https://opensource.org/licenses/MIT).
 
-## Code of Conduct
-
-Everyone interacting in the project's codebase, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/pirafrank/jekyll-ai-related/blob/main/CODE_OF_CONDUCT.md).
-
-## Guarantee
-
-This plugin is provided as is, without any guarantee. Use at your own risk.
-
-## Disclaimer
-
-This plugin uses OpenAI API and Supabase, and you are responsible for complying with their respective terms of service. This plugin is not affiliated with OpenAI or Supabase.
-
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+This plugin uses OpenAI and Supabase services. Users are responsible for complying with their respective terms of service. The plugin is not affiliated with either service.
