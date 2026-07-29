@@ -27,7 +27,7 @@ task :mkrelease do
   sh "git cliff --tag #{version} -o CHANGELOG.md"
   sh "git add CHANGELOG.md"
   sh "git commit -m 'chore: update CHANGELOG.md'"
-  sh "git tag -s -a -m 'v#{version}' #{version}"
+  sh "git tag -s -a -m 'v#{version}' v#{version}"
   sh "git push origin #{version}"
 end
 
