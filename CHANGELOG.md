@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 Migration notes for breaking changes are available in the [migration guide](https://github.com/pirafrank/jekyll-ai-related/blob/main/MIGRATE.md).
 
+## [0.3.0] - 2026-07-29
+
+### 🚀 Features
+
+- Cache embeddings by content fingerprint
+Cache embeddings by content fingerprint and skip OpenAI calls for
+    unchanged posts
+    Add `embedding_fingerprint` column and migration SQL for existing
+    Supabase tables
+    Add Minitest coverage for fingerprint calculation and cache/upsert
+    decisions
+
+### 🐛 Bug Fixes
+
+- Empty-vector crash
+
+### 📚 Documentation
+
+- Update docs for v0.3.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Docs
+- Docs update
+- Bump to v0.3.0
+- *(ci)* Using update release action after nodejs 20 deprecation
+
 ## [0.2.1] - 2026-02-10
 
 ### 🐛 Bug Fixes
